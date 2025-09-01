@@ -19,10 +19,16 @@ public class HttpRequest {
     }
 
     public String getValue(String paramName) {
-        
-        //Extrae el valor de paramName desde el query.
-        String paramValue = requri.getQuery().split("=")[1]; //Ejemplo: /app/hello?name=jhon
-        return paramValue;
+        // Soporta múltiples parámetros en el query string
+        if (requri.getQuery() == null) return null;
+        String[] params = requri.getQuery().split("&");
+        for (String param : params) {
+            String[] pair = param.split("=", 2);
+            if (pair.length == 2 && pair[0].equals(paramName)) {
+                return pair[1];
+            }
+        }
+        return null;
     }
 
 }

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de favoritos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="images/computadora.png" type="image/x-icon">
+</head>
+<body>
+<div class="container">
+    <h1>Lista de favoritos ⭐</h1>
+
+    <form id="componentForm">
+        <label for="name">Nombre:</label>
+        <input type="text" id="name" name="name" placeholder="Nombre" required>
+
+        <label for="type">Tipo:</label>
+        <select id="type" name="type">
+            <option value="MOVIE">Película</option>
+            <option value="SHOW">Serie</option>
+            <option value="BOOK">Libro</option>
+        </select>
+
+        <label for="description">Descripción:</label>
+        <input type="text" id="description" name="description" placeholder="Descripción" required>
+
+        <label>Calificación:</label>
+    <div class="star-rating">
+        <span class="star" data-value="1">★</span>
+        <span class="star" data-value="2">★</span>
+        <span class="star" data-value="3">★</span>
+        <span class="star" data-value="4">★</span>
+        <span class="star" data-value="5">★</span>
+    </div>
+    <input type="hidden" id="rating" name="rating" value="0">
+
+        <div class="button-container">
+            <button type="submit">Agregar</button>
+        </div>
+    </form>
+
+    <h2 id="componentsHeader" style="display: none;">Componentes agregados:</h2>
+    <table id="componentTable" style="display: none;">
+        <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Descripcion</th>
+            <th>Calificacion</th>
+        </tr>
+        </thead>
+        <tbody id="componentList"></tbody>
+    </table>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
