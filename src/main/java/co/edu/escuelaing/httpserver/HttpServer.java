@@ -1,6 +1,7 @@
 package co.edu.escuelaing.httpserver;
 
 import co.edu.escuelaing.microspringboot.annotations.GetMapping;
+import co.edu.escuelaing.microspringboot.annotations.PostMapping;
 import co.edu.escuelaing.microspringboot.annotations.RequestParam;
 import co.edu.escuelaing.microspringboot.annotations.RestController;
 import java.net.*;
@@ -17,6 +18,7 @@ public class HttpServer {
 
     private static String staticFilesFolder = "public";
     public static Map<String, Method> services = new HashMap<>();
+    public static Map<String, Method> postServices = new HashMap<>();
     public static Map<String, BiFunction<HttpRequest, HttpResponse, String>> getRoutes = new HashMap<>();
 
     public static void get(String path, BiFunction<HttpRequest, HttpResponse, String> handler) {
@@ -24,7 +26,6 @@ public class HttpServer {
     }
 
     public static void loadServices() throws ClassNotFoundException, IOException {
-        // Buscar todos los archivos .class en src/main/java (solo para este taller, no recursivo en JAR)
         File srcDir = new File("src/main/java");
         loadServicesFromDir(srcDir, "");
     }
@@ -44,10 +45,13 @@ public class HttpServer {
                                 String mapping = m.getAnnotation(GetMapping.class).value();
                                 services.put(mapping, m);
                             }
+                            if (m.isAnnotationPresent(PostMapping.class)) {
+                                String mapping = m.getAnnotation(PostMapping.class).value();
+                                postServices.put(mapping, m);
+                            }
                         }
                     }
                 } catch (Throwable t) {
-                    // Ignorar clases que no se puedan cargar
                 }
             }
         }
@@ -79,34 +83,48 @@ public class HttpServer {
                 System.exit(1);
             }
 
+            InputStream inputStream = clientSocket.getInputStream();
+            BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(
-                            clientSocket.getInputStream()));
             String inputLine, outputLine = null;
 
             boolean firstline = true;
             URI requri = null;
+            String method = "GET";
+            int contentLength = 0;
 
+            // Leer headers y método
             while ((inputLine = in.readLine()) != null) {
                 if (firstline) {
-                    requri = new URI(inputLine.split(" ")[1]);
+                    String[] parts = inputLine.split(" ");
+                    method = parts[0];
+                    requri = new URI(parts[1]);
                     System.out.println("Path: " + requri.getPath());
                     firstline = false;
                 }
+                if (inputLine.toLowerCase().startsWith("content-length:")) {
+                    contentLength = Integer.parseInt(inputLine.split(":")[1].trim());
+                }
                 System.out.println("Received: " + inputLine);
-                if (!in.ready()) {
+                if (inputLine.isEmpty()) {
                     break;
                 }
             }
 
-            if (services.containsKey(requri.getPath())) {
+            String body = null;
+            if ("POST".equalsIgnoreCase(method) && contentLength > 0) {
+                char[] bodyChars = new char[contentLength];
+                in.read(bodyChars, 0, contentLength);
+                body = new String(bodyChars);
+            }
+
+            if ("POST".equalsIgnoreCase(method) && postServices.containsKey(requri.getPath())) {
+                outputLine = invokePostService(requri, body);
+            } else if (services.containsKey(requri.getPath())) {
                 outputLine = invokeService(requri);
-            }
-            else if (getRoutes.containsKey(requri.getPath())) {
+            } else if (getRoutes.containsKey(requri.getPath())) {
                 outputLine = getRoutes.get(requri.getPath()).apply(new HttpRequest(requri), new HttpResponse());
-            }
-            else {
+            } else {
                 String filePath = staticFilesFolder + (requri.getPath().equals("/") ? "/index.html" : requri.getPath());
                 File file = new File(filePath.startsWith("/") ? filePath.substring(1) : filePath);
                 if (file.exists() && !file.isDirectory()) {
@@ -124,13 +142,30 @@ public class HttpServer {
             }
 
             if (outputLine != null) {
-                out.println(outputLine);
+                out.print(outputLine);
+                out.flush();
             }
             out.close();
             in.close();
             clientSocket.close();
         }
         serverSocket.close();
+    }
+
+    private static String invokePostService(URI requri, String body)
+            throws IllegalAccessException, InvocationTargetException {
+        Method m = postServices.get(requri.getPath());
+        if (m == null) {
+            return "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nEndpoint no encontrado";
+        }
+        String header = "HTTP/1.1 200 OK\r\n"
+                + "content-type: application/json\r\n"
+                + "\r\n";
+        if (m.getParameterCount() == 1 && m.getParameterTypes()[0] == String.class) {
+            return header + m.invoke(null, body);
+        } else {
+            return header + m.invoke(null);
+        }
     }
 
     private static String invokeService(URI requri) throws IllegalAccessException, InvocationTargetException {
@@ -165,12 +200,18 @@ public class HttpServer {
     }
 
     private static String getContentType(String filePath) {
-        if (filePath.endsWith(".html")) return "text/html";
-        if (filePath.endsWith(".css")) return "text/css";
-        if (filePath.endsWith(".js")) return "application/javascript";
-        if (filePath.endsWith(".png")) return "image/png";
-        if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";
-        if (filePath.endsWith(".gif")) return "image/gif";
+        if (filePath.endsWith(".html"))
+            return "text/html";
+        if (filePath.endsWith(".css"))
+            return "text/css";
+        if (filePath.endsWith(".js"))
+            return "application/javascript";
+        if (filePath.endsWith(".png"))
+            return "image/png";
+        if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg"))
+            return "image/jpeg";
+        if (filePath.endsWith(".gif"))
+            return "image/gif";
         return "text/plain";
     }
 

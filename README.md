@@ -1,4 +1,3 @@
-
 # Arquitecturas empresariales - Taller 3: MicroSpringBoot
 
 [![Java](https://img.shields.io/badge/Java-17%2B-blue.svg)](https://www.oracle.com/java/)
@@ -24,20 +23,21 @@ Usa anotaciones para definir controladores y rutas:
     - `@RestController`: Marca una clase como controlador REST.
     - `@GetMapping("/ruta")`: Expone un método como endpoint HTTP GET.
     - `@RequestParam`: Permite mapear parámetros de la URL a argumentos del método.
+    - `@PostMapping("/ruta")`: Expone un método como endpoint POST. 
 
-2. **Carga automática de POJOs y controladores**
+1. **Carga automática de POJOs y controladores**
 El framework detecta automáticamente las clases anotadas y las expone como endpoints.
 
-3. **Soporte para archivos estáticos**
+1. **Soporte para archivos estáticos**
 Sirve archivos HTML, CSS, JS, imágenes, etc. desde la carpeta `public`.
 
-4. **Fácil extensión y creación de endpoints**
+1. **Fácil extensión y creación de endpoints**
 Solo necesitas crear una clase anotada y métodos con las anotaciones adecuadas.
 
-5. **Manejo de parámetros de consulta y valores por defecto**
+1. **Manejo de parámetros de consulta y valores por defecto**
 Los métodos pueden recibir parámetros de la URL y valores por defecto usando `@RequestParam`.
 
-6. **POJOs y lógica de negocio**
+1. **POJOs y lógica de negocio**
 Puedes crear tus propios POJOs y usarlos en los controladores para exponer lógica de negocio o datos.
 
 ---
@@ -51,7 +51,9 @@ El núcleo es la clase `HttpServer`, que implementa el servidor HTTP y el sistem
 
 - `@RestController`: Marca una clase como controlador REST.
 - `@GetMapping("/ruta")`: Expone un método como endpoint GET.
+- `@PostMapping("/ruta")`: Expone un método como endpoint POST. El método debe ser `public static` y recibir un solo argumento tipo `String` (el body de la solicitud).
 - `@RequestParam(value = "param", defaultValue = "valor")`: Mapea parámetros de la URL a argumentos del método.
+
 
 ### Ejemplo de controlador
 
@@ -63,6 +65,27 @@ public class GreetingController {
     return "Hola " + name;
   }
 }
+```
+
+```java
+@PostMapping("/api/components")
+    public static String addComponentApiPost(String body) {
+        System.out.println("POST recibido: " + body);
+        String name = extractJsonValue(body, "name");
+        String type = extractJsonValue(body, "type");
+        String description = extractJsonValue(body, "description");
+        String rating = extractJsonValue(body, "rating");
+        String comp = String.format("%s|%s|%s|%s", name, type, description, rating);
+        componentes.add(comp);
+        return "{\"status\":\"OK\"}";
+    }
+```
+
+```java
+@GetMapping("/hello")
+    public static String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+        return "Hola " + name;
+    }
 ```
 
 ### Ejemplo de POJO
@@ -114,35 +137,28 @@ java -cp target/classes co.edu.escuelaing.microspringboot.MicroSpringBoot
 El framework detectará automáticamente **todas** las clases anotadas con `@RestController` en el classpath y expondrá sus métodos anotados como endpoints, sin necesidad de especificarlas en la línea de comandos.
 
 Puedes agregar más controladores y el framework los detectará automáticamente si están anotados.
+
+
 ### Flujo de Procesamiento de Solicitudes
 
 ```mermaid
 flowchart TD
-    A[Cliente HTTP] --> B[HttpServer:35000]
-    B --> C{Tipo de Solicitud?}
-    
-    C -->|"Ruta Lambda"| D["getRoutes.get(path)"]
-    D --> E["Ejecutar RouteHandler"]
-    E --> F["Retornar Respuesta"]
-    
-    C -->|"/api/components"| G["handleApiRequest"]
-    G --> H{GET o POST?}
-    H -->|GET| I["Serializar Components a JSON"]
-    H -->|POST| J["Parsear JSON y Agregar Component"]
-    I --> F
-    J --> F
-    
-    C -->|"Archivo Estático"| K["serveStaticFile"]
-    K --> L["Buscar en staticFilesFolder"]
-    L --> M{Archivo Existe?}
-    M -->|Sí| N["Servir con MIME Type"]
-    M -->|No| O["404 Not Found"]
-    N --> F
-    O --> F
-
+  A[Cliente HTTP] --> B[HttpServer:35000]
+  B --> C{¿La ruta coincide con un endpoint @GetMapping?}
+  C -->|Sí| D["Invocar método del controlador anotado"]
+  D --> E["Retornar respuesta"]
+  C -->|No| F{¿La ruta coincide con una ruta manual?}
+  F -->|Sí| G["Ejecutar handler manual"]
+  G --> E
+  F -->|No| H{¿Archivo estático en public?}
+  H -->|Sí| I["Servir archivo con MIME Type"]
+  I --> E
+  H -->|No| J["404 Not Found"]
+  J --> E
 ```
 
 ---
+
 ## Estructura de archivos del proyecto
 
 ```bash
@@ -156,19 +172,27 @@ flowchart TD
 │   └── styles.css           # Hojas de estilo para dar diseño a la interfaz           
 ├── src/                     # Código fuente y pruebas
 │   ├── main/                # Código principal
-│   │   ├── java/                 
-│   │   │   └── com/
-│   │   │       └── arep/
-│   │   │           └── Component.java    # Clase modelo para representar un componente
-│   │   │           └── HttpServer.java   # Clase principal del servidor
-│   │   │           └── clase/            # Archivos creados en las clases de laboratorio
-│   └── test/                             # Código de pruebas unitarias
-│       └── java/
-│           └── com/
-│               └── arep/
-│                   └── ComponentTest.java
-│                   └── HttpServerIntegrationTest.java
-│                   └── HttpServerTest.java
+│   │   └── java/
+│   │       └── co/
+│   │           └── edu/
+│   │               └── escuelaing/
+│   │                   ├── httpserver/
+│   │                   │   ├── HttpServer.java   # Clase principal del servidor
+│   │                   │   ├── HttpRequest.java  # Encapsula la solicitud HTTP
+│   │                   │   ├── HttpResponse.java # Placeholder para respuesta
+│   │                   │   └── ...
+│   │                   ├── microspringboot/
+│   │                   │   ├── MicroSpringBoot.java # Main launcher
+│   │                   │   ├── annotations/         # Anotaciones propias
+│   │                   │   │   ├── RestController.java
+│   │                   │   │   ├── GetMapping.java
+│   │                   │   │   └── RequestParam.java
+│   │                   │   └── examples/
+│   │                   │       ├── ClaseController.java    # Ejemplo de controlador
+│   │                   │       ├── GreetingController.java # Ejemplo de controlador
+│   │                   │       └── ...
+│   │                   └── Component.java # Clase modelo para representar un componente, usada en index.html
+│   └── test/                     # Código de pruebas unitarias
 ├── target/                       # Archivos compilados y empaquetados (generado por Maven)
 ├── pom.xml                       # Configuración de Maven (dependencias y build)
 └── README.md
@@ -181,17 +205,11 @@ flowchart TD
 
 Si vamos a la url http://localhost:35000/index.html vemos la aplicación web creada para el taller 1, es una lista para tener los libros, películas y series que el usuario haya visto y quiera guardar para futuros recuerdos, puede añadir una descripción y una calificación.
 
+Este archivo se modificó para que pueda enviar solicitudes POST con JSON a `/api/components` haciendo uso de nuestro framework microspringboot y recibir respuestas inmediatas, permitiendo una experiencia SPA moderna.
+
 ![screenshot](/public/images/image.png)
 
-Puede especificar si es un libro, película o serie.
-
-![screenshot](/public/images/image2.png)
-
-![screenshot](/public/images/image3.png)
-
-
 Si vamos a la url http://localhost:35000/clase.html vemos la página web hecha en clase, la primera simplemente imprime "Hello" y el nombre que se ponga, y la segunda imprime el número pi, estos endpoints fueron creados usando funciones lambda.
-
 
 ![screenshot](/public/images/image7.png)
 
@@ -220,13 +238,13 @@ Siga estos pasos para obtener un entorno de desarrollo funcional:
 Clone este repositorio:
 
 ```bash
-git clone https://github.com/Juan-Jose-D/Taller2-AREP.git
+git clone https://github.com/Juan-Jose-D/Taller3-AREP.git
 ```
 
 Ingrese al directorio del proyecto:
 
 ```bash
-cd Taller2-AREP
+cd Taller3-AREP
 ```
 
 Compile el proyecto con Maven:
@@ -238,21 +256,22 @@ mvn clean compile
 Y ejecute el servidor:
 
 ```bash
-java -cp target/classes com.arep.HttpServer
+java -cp target/classes co.edu.escuelaing.microspringboot.MicroSpringBoot
 ```
 
-![screenshot](/public/images/image6.png)
+![alt text](/public/images/image6.png)
 
 Abra su navegador y acceda a alguna de las rutas:
 
 ```bash
+# Endpoints por anotaciones
+http://localhost:35000/hello?name=Juan
+http://localhost:35000/greeting?name=Juan
+http://localhost:35000/pi
+
 # Páginas estáticas
 http://localhost:35000/index.html
 http://localhost:35000/clase.html
-# Endpoints por anotaciones
-http://localhost:35000/App/hello?name=Juan
-http://localhost:35000/App/pi
-http://localhost:35000/greeting?name=Juan
 ```
 
 ---
@@ -310,7 +329,7 @@ mvn clean package
 Ejecute el JAR generado:
 
 ```bash
-java -jar target/taller1-arep-1.0-SNAPSHOT.jar 
+java -jar target/MicroSpringboot-1.0-SNAPSHOT.jar
 ```
 
 ---
