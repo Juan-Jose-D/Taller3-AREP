@@ -4,7 +4,7 @@
 [![Maven](https://img.shields.io/badge/Maven-Build-brightgreen.svg)](https://maven.apache.org/)
 
 
-Este proyecto implementa un mini-framework tipo Spring Boot llamado **MicroSpringBoot**, que permite construir aplicaciones web modernas en Java usando anotaciones para definir controladores, rutas y parámetros. El servidor es capaz de servir páginas HTML, imágenes, recursos estáticos y exponer servicios REST a partir de POJOs anotados. 
+Este proyecto implementa un mini-framework tipo Spring Boot llamado **MicroSpringBoot**, que permite construir aplicaciones web en Java usando anotaciones para definir controladores, rutas y parámetros. El servidor es capaz de servir páginas HTML, imágenes, recursos estáticos y exponer servicios REST a partir de POJOs anotados. 
 
 El framework incluye:
 - Un sistema de anotaciones propio (`@RestController`, `@GetMapping`, `@RequestParam`).
@@ -122,21 +122,6 @@ Puedes usar POJOs en tus controladores para lógica de negocio, almacenamiento e
 
 - **Archivos estáticos:**
   El método `staticfiles(String folder)` permite especificar la carpeta raíz de los archivos estáticos.
-
-
-### Ejemplo de ejecución y uso
-
-
-Compila el proyecto y ejecuta el servidor:
-
-```bash
-mvn clean compile
-java -cp target/classes co.edu.escuelaing.microspringboot.MicroSpringBoot
-```
-
-El framework detectará automáticamente **todas** las clases anotadas con `@RestController` en el classpath y expondrá sus métodos anotados como endpoints, sin necesidad de especificarlas en la línea de comandos.
-
-Puedes agregar más controladores y el framework los detectará automáticamente si están anotados.
 
 
 ### Flujo de Procesamiento de Solicitudes
@@ -258,6 +243,7 @@ Y ejecute el servidor:
 ```bash
 java -cp target/classes co.edu.escuelaing.microspringboot.MicroSpringBoot
 ```
+El framework detectará automáticamente todas las clases anotadas con `@RestController` en el classpath y expondrá sus métodos anotados como endpoints, sin necesidad de especificarlas en la línea de comandos.
 
 ![alt text](/public/images/image6.png)
 
