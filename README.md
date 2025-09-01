@@ -196,6 +196,8 @@ Este archivo se modificó para que pueda enviar solicitudes POST con JSON a `/ap
 
 Si vamos a la url http://localhost:35000/clase.html vemos la página web hecha en clase, la primera simplemente imprime "Hello" y el nombre que se ponga, y la segunda imprime el número pi, estos endpoints fueron creados usando funciones lambda.
 
+Esto también se modificó para que use nuestro microspringboot
+
 ![screenshot](/public/images/image7.png)
 
 ---

@@ -21,7 +21,7 @@
       xhttp.onload = function() {
         document.getElementById("getrespmsg").innerHTML = this.responseText;
       }
-      xhttp.open("GET", "/App/hello");
+      xhttp.open("GET", "/hello");
       xhttp.send();
     }
   </script>
@@ -33,7 +33,7 @@
       xhttp.onload = function() {
         document.getElementById("getrespmsg").innerHTML = this.responseText;
       }
-      xhttp.open("GET", "/App/hello?name=" + encodeURIComponent(nameVar));
+      xhttp.open("GET", "/hello?name=" + encodeURIComponent(nameVar));
       xhttp.send();
     }
   </script>
@@ -49,7 +49,7 @@
       xhttp.onload = function() {
         document.getElementById("pirespmsg").innerHTML = this.responseText;
       }
-      xhttp.open("GET", "/App/pi");
+      xhttp.open("GET", "/pi");
       xhttp.send();
     }
   </script>
